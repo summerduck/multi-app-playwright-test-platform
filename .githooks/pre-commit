@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Format Python files using Black
+echo "Formatting Python files using Black..."
+black $STAGED_FILES
+BLACK_EXIT_CODE=$?
+
+if [ $BLACK_EXIT_CODE -ne 0 ]; then
+    echo "Black formatting failed. Please fix the issues before committing."
+    exit 1
+fi
+
+# Re-add the formatted files to the staging area
+git add $STAGED_FILES

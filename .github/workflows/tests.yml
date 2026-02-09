@@ -1,0 +1,18 @@
+name: Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - 
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+      - name: Install dependencies
+        run: pip install -r requirements.txt --cache-dir .pip_cache
+      - name: Install playwright
+        run: playwright install chromium
+      - name: Run tests
+        env:
+          USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+        run: pytest -v -s -n auto --junitxml="result.xml" --html=report.html --self-contained-html --log-format='%(asctime)s [%(levelname)s] [%(name)s] %(message)s' --reruns 3
