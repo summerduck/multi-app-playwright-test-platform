@@ -1,0 +1,192 @@
+version: '3'
+
+vars:
+  PYTHON: python3
+  PIP: pip
+  PYTEST: pytest
+  BROWSER: chromium
+
+tasks:
+  default:
+    desc: Show available tasks (default)
+    cmds:
+      - task --list
+    silent: true
+
+  # ============================================================================
+  # Installation
+  # ============================================================================
+
+  install:
+    desc: Install production dependencies and browsers
+    cmds:
+      - echo "Installing dependencies..."
+      - '{{.PIP}} install -r requirements.txt'
+      - echo "Dependencies installed successfully!"
+      - echo "Installing Playwright browsers..."
+      - playwright install {{.BROWSER}}
+      - echo "Playwright browsers installed successfully!"
+
+  install-dev:
+    desc: Install development dependencies
+    cmds:
+      - echo "Installing development dependencies..."
+      - '{{.PIP}} install -r requirements.txt'
+      - echo "Development dependencies installed successfully!"
+
+  install-browsers:
+    desc: Install all Playwright browsers
+    cmds:
+      - echo "Installing all Playwright browsers..."
+      - playwright install
+      - echo "All browsers installed successfully!"
+
+  # ============================================================================
+  # Testing
+  # ============================================================================
+
+  test:
+    desc: Run all tests
+    cmds:
+      - '{{.PYTEST}} tests/'
+
+  test-parallel:
+    desc: Run tests in parallel
+    cmds:
+      - '{{.PYTEST}} -n auto tests/'
+
+  test-verbose:
+    desc: Run tests with verbose output
+    cmds:
+      - '{{.PYTEST}} -v tests/'
+
+  test-headed:
+    desc: Run tests in headed mode (visible browser)
+    cmds:
+      - '{{.PYTEST}} --headed tests/'
+
+  test-specific:
+    desc: "Run specific test file (usage: task test-specific -- tests/test_file.py)"
+    cmds:
+      - "{{.PYTEST}} {{.CLI_ARGS}}"
+
+  test-markers:
+    desc: "Run tests by marker (usage: task test-markers -- -m smoke)"
+    cmds:
+      - "{{.PYTEST}} {{.CLI_ARGS}} tests/"
+
+  # ============================================================================
+  # Code Quality
+  # ============================================================================
+
+  format:
+    desc: Format code with black and isort
+    cmds:
+      - echo "Formatting code with black..."
+      - black .
+      - echo "Sorting imports with isort..."
+      - isort .
+      - echo "Code formatting complete!"
+
+  lint:
+    desc: Run linting tools (pylint + flake8)
+    cmds:
+      - echo "Running pylint..."
+      - pylint pages/ tests/ utils/ || true
+      - echo "Running flake8..."
+      - flake8 pages/ tests/ utils/ || true
+      - echo "Linting complete!"
+
+  type-check:
+    desc: Run type checking with mypy
+    cmds:
+      - echo "Running mypy type checker..."
+      - mypy pages/ tests/ utils/ || true
+      - echo "Type checking complete!"
+
+  quality:
+    desc: Run all quality checks (format + lint + type-check)
+    deps:
+      - format
+      - lint
+      - type-check
+    cmds:
+      - echo "All quality checks complete!"
+
+  # ============================================================================
+  # Pre-commit
+  # ============================================================================
+
+  pre-commit:
+    desc: Run pre-commit hooks on all files
+    cmds:
+      - pre-commit run --all-files
+
+  pre-commit-install:
+    desc: Install pre-commit hooks
+    cmds:
+      - pre-commit install
+
+  pre-commit-update:
+    desc: Update pre-commit hooks
+    cmds:
+      - pre-commit autoupdate
+
+  # ============================================================================
+  # Reports
+  # ============================================================================
+
+  report:
+    desc: Open HTML test report
+    cmds:
+      - cmd: |
+          if [ -f report.html ]; then
+            echo "Opening HTML test report..."
+            open report.html 2>/dev/null || xdg-open report.html 2>/dev/null || echo "Please open report.html manually"
+          else
+            echo "No report.html found. Run tests first."
+          fi
+    silent: true
+
+  allure-report:
+    desc: Generate Allure report
+    cmds:
+      - echo "Generating Allure report..."
+      - allure generate allure-report -o allure-results --clean
+      - echo "Allure report generated in allure-results/"
+
+  allure-serve:
+    desc: Generate and serve Allure report
+    cmds:
+      - echo "Generating and serving Allure report..."
+      - allure serve allure-report
+
+  # ============================================================================
+  # Cleanup
+  # ============================================================================
+
+  clean:
+    desc: Clean test artifacts and cache
+    cmds:
+      - echo "Cleaning test artifacts and cache..."
+      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type f -name "*.pyc" -delete 2>/dev/null || true
+      - find . -type f -name "*.pyo" -delete 2>/dev/null || true
+      - find . -type f -name ".coverage" -delete 2>/dev/null || true
+      - rm -rf .mypy_cache .tox .coverage htmlcov 2>/dev/null || true
+      - rm -rf test-results/ test-logs/ 2>/dev/null || true
+      - rm -f report.html result.xml 2>/dev/null || true
+      - echo "Cleanup complete!"
+
+  clean-all:
+    desc: Deep clean including venv and reports
+    deps:
+      - clean
+    cmds:
+      - echo "Performing deep clean..."
+      - rm -rf venv/ 2>/dev/null || true
+      - rm -rf allure-report/ allure-results/ 2>/dev/null || true
+      - rm -rf logs/ 2>/dev/null || true
+      - echo "Deep cleanup complete!"
