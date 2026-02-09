@@ -1,0 +1,92 @@
+---
+alwaysApply: true
+---
+
+# General Principles
+
+- Never use apologies
+- Always verify information before presenting it. Do not make assumptions or speculate without clear evidence.
+
+# Programming Principles
+
+Reference: [Programming Principles Repository](https://github.com/webpro/programming-principles)
+
+## Generic Principles
+
+### KISS (Keep It Simple, Stupid)
+Most systems work and are understood better if they are kept simple rather than made complex.
+- Less code takes less time to write, has less bugs, and is easier to modify
+- Simplicity is the ultimate sophistication
+- Perfection is reached not when there is nothing left to add, but when there is nothing left to take away
+
+### YAGNI (You Aren't Gonna Need It)
+Don't implement something until it is necessary.
+- Implement things when you actually need them, never when you just foresee that you need them
+- Prevents code bloat and unnecessary complexity
+
+### Do The Simplest Thing That Could Possibly Work
+Real progress against the real problem is maximized if we just work on what the problem really is.
+- Ask yourself: "What is the simplest thing that could possibly work?"
+
+### Separation of Concerns
+Separate a computer program into distinct sections, such that each section addresses a separate concern.
+- Business logic and user interface are separate concerns
+- Changing one should not require changing the other
+
+### Avoid Premature Optimization
+Premature optimization is the root of all evil.
+- First make it work, then make it right, then make it fast
+- Optimize only when necessary and after profiling
+
+### Keep things DRY (Don't Repeat Yourself)
+Every piece of knowledge must have a single, unambiguous, authoritative representation within a system.
+- Avoid duplication of logic and data
+- Abstract reusable code into functions, classes, or modules
+
+## Code Structure Principles
+
+### Single Responsibility Principle (SRP)
+A class should have only one reason to change.
+- Every class should have a single responsibility
+- That responsibility should be entirely encapsulated by the class
+- Each function, class, or module should do one thing well
+
+### Minimize Coupling
+Coupling is the degree to which each program module relies on other modules. Lower coupling is better.
+- Changes in one module require fewer changes in other modules
+- Modules can be understood and reused independently
+
+### Maximize Cohesion
+Group related functionalities that form a meaningful unit.
+- Reduced module complexity
+- Increased maintainability and reusability
+- Related code stays together
+
+### Composition Over Inheritance
+Favor object composition over class inheritance.
+- Composition is more flexible and leads to more maintainable code
+- Avoid deep inheritance hierarchies
+
+### SOLID Principles
+- **S**ingle Responsibility: A class should have only one reason to change
+- **O**pen/Closed: Open for extension, closed for modification
+- **L**iskov Substitution: Subtypes must be substitutable for their base types
+- **I**nterface Segregation: Many specific interfaces are better than one general interface
+- **D**ependency Inversion: Depend on abstractions, not concretions
+
+# Testing Principles
+
+### FIRST Principles of Testing
+Tests should be:
+- **F**ast - Tests should run quickly
+- **I**solated - Tests should not depend on each other
+- **R**epeatable - Tests should produce same results every time
+- **S**elf-validating - Tests should have a boolean output (pass/fail)
+- **T**imely - Tests should be written at the right time (ideally before production code)
+
+### Arrange, Act, Assert (AAA Pattern)
+Pattern to arrange and format code in tests:
+- **Arrange** - Set up all necessary preconditions and inputs
+- **Act** - Execute the method or object under test
+- **Assert** - Verify that the expected results have occurred
+
