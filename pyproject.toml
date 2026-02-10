@@ -82,6 +82,7 @@ module = [
     "allure.*",
     "faker.*",
     "dotenv.*",
+    "hypothesis.*",
 ]
 ignore_missing_imports = true
 
@@ -137,4 +138,12 @@ markers = [
     "saucedemo: Tests for SauceDemo application",
     "theinternet: Tests for The Internet application",
     "uiplayground: Tests for UI Playground application",
+    "unit: Unit tests for framework code",
+    "property: Property-based tests (Hypothesis)",
 ]
+
+[tool.hypothesis]
+# Default profile: balanced speed and thoroughness
+# CI profile uses more examples for higher confidence
+# Dev profile uses fewer examples for faster feedback
+database_backend = "directory"
