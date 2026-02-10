@@ -27,23 +27,32 @@ repos:
       - id: mixed-line-ending
         name: Check line endings
         args: ['--fix=lf']
+      - id: name-tests-test
+        name: Check test file naming convention
+        args: ["--test-prefix=test_"]
+      - id: no-commit-to-branch
+        name: Prevent commits to protected branches
+        args: ["--branch=main"]
+      - id: debug-statements
+        name: Detect debug statements
+        args: ["--pattern=assert_used|assert_not_used|assert_used_in_tests|assert_not_used_in_tests"]
 
   # Python linting and formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.7.4
     hooks:
       - id: ruff
-        name: Lint with Ruff
+        name: Linting and static analysis with Ruff
         args: ["--fix", "--exit-non-zero-on-fix"]
       - id: ruff-format
-        name: Format with Ruff
+        name: Code formatting with Ruff
 
   # Python type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.13.0
     hooks:
       - id: mypy
-        name: Type check with mypy
+        name: Type checking with mypy
         args: ["--config-file=pyproject.toml", "--strict"]
         additional_dependencies:
           - pytest>=7.4.0
@@ -56,7 +65,7 @@ repos:
     rev: 1.7.10
     hooks:
       - id: bandit
-        name: Security scan with Bandit
+        name: Security scanning with Bandit
         args: ["-c", "pyproject.toml"]
         additional_dependencies: ["bandit[toml]"]
         exclude: ^tests/
@@ -66,7 +75,7 @@ repos:
     rev: v2.7.3
     hooks:
       - id: pip-audit
-        name: Audit dependencies with pip-audit
+        name: Dependency vulnerability audit with pip-audit
         args: ["-r", "requirements.txt"]
 
 # Configuration
