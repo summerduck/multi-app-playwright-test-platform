@@ -13,12 +13,12 @@ echo "[INFO] Project root: $PROJECT_ROOT"
 # Update dependencies if package files changed
 if git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | grep -qE '(requirements.*\.txt|pyproject\.toml|poetry\.lock)'; then
     echo "[INFO] Dependency files changed - updating environment..."
-    
+
     if ! task install; then
         echo "[ERROR] Failed to install dependencies"
         exit 1
     fi
-    
+
     echo "[INFO] Dependencies updated successfully"
 else
     echo "[INFO] No dependency changes detected"
