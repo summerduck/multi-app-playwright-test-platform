@@ -27,15 +27,9 @@ repos:
       - id: mixed-line-ending
         name: Check line endings
         args: ['--fix=lf']
-      - id: name-tests-test
-        name: Check test file naming convention
-        args: ["--test-prefix=test_"]
       - id: no-commit-to-branch
         name: Prevent commits to protected branches
         args: ["--branch=main"]
-      - id: debug-statements
-        name: Detect debug statements
-        args: ["--pattern=assert_used|assert_not_used|assert_used_in_tests|assert_not_used_in_tests"]
 
   # Python linting and formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -77,6 +71,24 @@ repos:
       - id: pip-audit
         name: Dependency vulnerability audit with pip-audit
         args: ["-r", "requirements.txt"]
+
+  # Complexity & maintainability metrics
+  - repo: local
+    hooks:
+      - id: radon-cc
+        name: Cyclomatic complexity check (Radon)
+        entry: radon cc --min C --average --show-complexity
+        language: system
+        types: [python]
+        exclude: ^tests/|^conftest\.py$
+        verbose: true
+      - id: radon-mi
+        name: Maintainability index check (Radon)
+        entry: radon mi --show --min B
+        language: system
+        types: [python]
+        exclude: ^tests/|^conftest\.py$
+        verbose: true
 
 # Configuration
 fail_fast: false

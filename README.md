@@ -95,7 +95,7 @@ This framework provides a production-ready test automation platform with a tier-
 | **CI/CD** | GitHub Actions (matrix strategy) |
 | **Monitoring** | Prometheus, Grafana |
 | **Reporting** | Allure Framework |
-| **Code Quality** | Black, isort, mypy, Ruff, Bandit, pre-commit |
+| **Code Quality** | mypy, Ruff, Bandit, pre-commit |
 | **Configuration** | Pydantic Settings |
 | **Visual Testing** | TBD (Tier 2) |
 | **Accessibility** | TBD (Tier 2: axe-core-python) |
