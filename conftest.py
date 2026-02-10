@@ -39,8 +39,6 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     Returns:
         None
     """
-    # Load the .env file
-    load_dotenv()
     parser.addoption(
         "--user-pw",
         action="store",
@@ -82,6 +80,7 @@ def pytest_configure(config: pytest.Config) -> None:
     Returns:
         None
     """
+    load_dotenv()
     make_dir_for_logs()
 
 
@@ -178,14 +177,14 @@ def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> 
     Returns:
         None
     """
-    logger = logging.getLogger()
-    logger.info("Finished test - %s", item.nodeid)
+    root_logger = logging.getLogger()
+    root_logger.info("Finished test - %s", item.nodeid)
 
     # Remove test-specific handlers
-    for handler in logger.handlers[:]:
+    for handler in root_logger.handlers[:]:
         if isinstance(handler, logging.FileHandler):
             handler.close()
-            logger.removeHandler(handler)
+            root_logger.removeHandler(handler)
 
 
 @pytest.hookimpl(tryfirst=True)
