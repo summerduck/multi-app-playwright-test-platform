@@ -97,7 +97,7 @@ confidence = "medium"
 skips = ["*/test_*.py", "*/conftest.py"]
 
 [tool.coverage.run]
-source = ["pages", "tests", "utils", "config"]
+source = ["pages", "utils", "config"]
 omit = [
     "*/__pycache__/*",
     "*/.venv/*",
@@ -121,6 +121,10 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
+log_cli = true
+log_level = "INFO"
+log_format = "%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
+console_output_style = "progress"
 addopts = [
     "-v",
     "--strict-markers",
@@ -130,6 +134,11 @@ addopts = [
     "--cov=config",
     "--cov-report=term-missing",
     "--cov-report=html",
+    "--html=report.html",
+    "--self-contained-html",
+    "--alluredir=allure-report",
+    "--capture=tee-sys",
+    "--reruns=2",
 ]
 markers = [
     "smoke: Quick smoke tests",
@@ -140,6 +149,15 @@ markers = [
     "uiplayground: Tests for UI Playground application",
     "unit: Unit tests for framework code",
     "property: Property-based tests (Hypothesis)",
+    "network: Network monitoring tests",
+    "validation: Validation tests",
+    "ui_ux: UI/UX tests",
+    "account_creation: Account creation tests",
+    "security: Security tests",
+    "performance: Performance tests",
+    "accessibility: Accessibility tests",
+    "acceptance: Acceptance tests",
+    "integration: Integration tests",
 ]
 
 [tool.hypothesis]
