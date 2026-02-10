@@ -80,36 +80,42 @@ tasks:
   # ============================================================================
 
   format:
-    desc: Format code with black and isort
+    desc: Format code with ruff
     cmds:
-      - echo "Formatting code with black..."
-      - black .
-      - echo "Sorting imports with isort..."
-      - isort .
+      - echo "Sorting imports with ruff..."
+      - ruff check --select I --fix .
+      - echo "Formatting code with ruff..."
+      - ruff format .
       - echo "Code formatting complete!"
 
   lint:
-    desc: Run linting tools (pylint + flake8)
+    desc: Run linting with ruff
     cmds:
-      - echo "Running pylint..."
-      - pylint pages/ tests/ utils/ || true
-      - echo "Running flake8..."
-      - flake8 pages/ tests/ utils/ || true
+      - echo "Running ruff linter..."
+      - ruff check pages/ tests/ utils/ config/ --fix
       - echo "Linting complete!"
 
   type-check:
     desc: Run type checking with mypy
     cmds:
       - echo "Running mypy type checker..."
-      - mypy pages/ tests/ utils/ || true
+      - mypy pages/ tests/ utils/ config/ || true
       - echo "Type checking complete!"
 
+  security:
+    desc: Run security scanning with bandit
+    cmds:
+      - echo "Running bandit security scanner..."
+      - bandit -r pages/ tests/ utils/ config/ -c pyproject.toml || true
+      - echo "Security scanning complete!"
+
   quality:
-    desc: Run all quality checks (format + lint + type-check)
+    desc: Run all quality checks (format + lint + type-check + security)
     deps:
       - format
       - lint
       - type-check
+      - security
     cmds:
       - echo "All quality checks complete!"
 
