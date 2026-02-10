@@ -12,7 +12,7 @@ Alternatives considered: Selenium, Cypress, Puppeteer.
 
 ## Decision
 
-Will be used [Playwright](https://playwright.dev/python/) with Python, integrated via pytest-playwright.
+The framework uses [Playwright](https://playwright.dev/python/) with Python, integrated via pytest-playwright.
 
 Reasons:
 
@@ -27,5 +27,5 @@ Reasons:
 
 - All E2E tests use the Page Object Model on top of Playwright's API
 - CI matrix runs tests across 3 browsers per application (9 jobs)
-- Team members need `playwright install` to set up local browsers
+- Local setup requires `playwright install` to download browsers
 - Playwright's auto-wait reduces the need for explicit waits and sleep calls

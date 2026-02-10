@@ -24,4 +24,4 @@ Key changes:
 - No manual bash logic to maintain
 - Hooks are reproducible across environments
 - Broader and more reliable code quality checks
-- Team members need `pre-commit install` in their local setup
+- Local setup requires `pre-commit install` after cloning
