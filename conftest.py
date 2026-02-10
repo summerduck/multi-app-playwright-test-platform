@@ -62,8 +62,8 @@ def make_dir_for_logs() -> None:
 
     # Create a new log directory
     LOG_DIR.mkdir(exist_ok=True)
-    FAILED_LOG_DIR.mkdir(exist_ok=True)
-    SCREENSHOTS_DIR.mkdir(exist_ok=True)
+    FAILED_LOG_DIR.mkdir(parents=True, exist_ok=True)
+    SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def pytest_configure(config: pytest.Config) -> None:
