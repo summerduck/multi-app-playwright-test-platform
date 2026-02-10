@@ -11,91 +11,21 @@ import os
 import re
 import shutil
 import sys
-from dotenv import load_dotenv
+from pathlib import Path
 
 import pytest
-import allure
-from playwright.sync_api import Page
+from dotenv import load_dotenv
 
 # Handle display of output log when using xdist
 sys.stdout = sys.stderr
 
 # Base directory for test logs
-LOG_DIR = "test-logs"
-FAILED_LOG_DIR = os.path.join(LOG_DIR, "failed_tests")
-SCREENSHOTS_DIR = os.path.join(LOG_DIR, "screenshots")
+LOG_DIR = Path("test-logs")
+FAILED_LOG_DIR = LOG_DIR / "failed_tests"
+SCREENSHOTS_DIR = LOG_DIR / "screenshots"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
-
-
-@pytest.fixture()
-def customer_account_create_page(page: Page) -> CustomerAccountCreatePage:
-    """
-    Fixture to initialize the CustomerAccountCreatePage instance.
-
-    This fixture creates an instance of the CustomerAccountCreatePage class,
-    which is a page object for the customer account creation page. It provides
-    a consistent environment for running tests with Playwright.
-
-    Args:
-        page (Page): Playwright Page instance for browser interactions
-
-    Returns:
-        CustomerAccountCreatePage: Instance of the CustomerAccountCreatePage class
-    """
-    return CustomerAccountCreatePage(page)
-
-
-@pytest.fixture()
-def customer_account_page(page: Page) -> CustomerAccountPage:
-    """Fixture to initialize the CustomerAccountPage instance.
-
-    This fixture creates an instance of the CustomerAccountPage class,
-    which is a page object for the customer account page. It provides
-    a consistent environment for running tests with Playwright.
-
-    Args:
-        page (Page): Playwright Page instance for browser interactions
-
-    Returns:
-        CustomerAccountPage: Instance of the CustomerAccountPage class
-    """
-    return CustomerAccountPage(page)
-
-
-@pytest.fixture()
-def eco_friendly_page(page: Page) -> EcoFriendlyPage:
-    """Fixture to initialize the EcoFriendlyPage instance.
-
-    This fixture creates an instance of the EcoFriendlyPage class,
-    which is a page object for the eco-friendly page. It provides
-    a consistent environment for running tests with Playwright.
-
-    Args:
-        page (Page): Playwright Page instance for browser interactions
-
-    Returns:
-        EcoFriendlyPage: Instance of the EcoFriendlyPage class
-    """
-    return EcoFriendlyPage(page)
-
-
-@pytest.fixture()
-def sale_page(page: Page) -> SalePage:
-    """Fixture to initialize the SalePage instance.
-
-    This fixture creates an instance of the SalePage class,
-    which is a page object for the sale page. It provides
-    a consistent environment for running tests with Playwright.
-
-    Args:
-        page (Page): Playwright Page instance for browser interactions
-
-    Returns:
-        SalePage: Instance of the SalePage class
-    """
-    return SalePage(page)
 
 
 # Pytest custom add option arguments
@@ -132,14 +62,14 @@ def make_dir_for_logs() -> None:
         None
     """
     # Check if the directory exists before attempting to delete it
-    if os.path.exists(LOG_DIR):
+    if LOG_DIR.exists():
         # Delete the directory and its contents
         shutil.rmtree(LOG_DIR)
 
     # Create a new log directory
-    os.makedirs(LOG_DIR, exist_ok=True)
-    os.makedirs(FAILED_LOG_DIR, exist_ok=True)
-    os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
+    LOG_DIR.mkdir(exist_ok=True)
+    FAILED_LOG_DIR.mkdir(exist_ok=True)
+    SCREENSHOTS_DIR.mkdir(exist_ok=True)
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -160,7 +90,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 @pytest.fixture
-def user_password(request) -> str:
+def user_password(request: pytest.FixtureRequest) -> str:
     """
     Fixture to get the user password from the command line.
 
@@ -173,7 +103,8 @@ def user_password(request) -> str:
     Returns:
         str: The user password from the command line
     """
-    return request.config.getoption("--user-pw")
+    password: str = request.config.getoption("--user-pw")
+    return password
 
 
 def sanitize_nodeid(node_id: str) -> str:
@@ -185,8 +116,7 @@ def sanitize_nodeid(node_id: str) -> str:
     tokens[-1] = tokens[-1].replace("/", "-")
     tokens[-1] = re.sub(r"-+", "-", tokens[-1])
     node_id = "/".join([x for x in tokens if x != "()"])
-    node_id = re.sub(r"\[(.+)\]", r"-\1", node_id)
-    return node_id
+    return re.sub(r"\[(.+)\]", r"-\1", node_id)
 
 
 def get_last_element(node_id: str) -> str:
@@ -200,7 +130,7 @@ def get_last_element(node_id: str) -> str:
     Returns:
         str: The last part of the sanitized nodeid
     """
-    return node_id.split("/")[-1]
+    return node_id.rsplit("/", maxsplit=1)[-1]
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -221,24 +151,24 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     test_name = get_last_element(sanitize_nodeid(item.nodeid))
     max_filename_length = 255
     truncated_test_name = test_name[
-        : max_filename_length - len(LOG_DIR) - 5
+        : max_filename_length - len(str(LOG_DIR)) - 5
     ]  # 5 for ".log" and separators
-    log_file = os.path.join(LOG_DIR, f"{truncated_test_name}.log")
+    log_file = LOG_DIR / f"{truncated_test_name}.log"
 
     # Configure logging for the current test
-    logger = logging.getLogger()
-    logger.handlers = []  # Remove any existing handlers
-    handler = logging.FileHandler(log_file)
+    test_logger = logging.getLogger()
+    test_logger.handlers = []  # Remove any existing handlers
+    handler = logging.FileHandler(str(log_file))
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
     formatter.default_msec_format = "%s.%03d"
     handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-    logger.info("Starting test - %s", item.nodeid)
+    test_logger.addHandler(handler)
+    test_logger.setLevel(logging.INFO)
+    test_logger.info("Starting test - %s", item.nodeid)
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item) -> None:
+def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> None:
     """
     Cleans up the logger after the test is completed
 
@@ -278,53 +208,7 @@ def pytest_runtest_logreport(report: pytest.TestReport) -> None:
     """
     if report.when == "call" and report.failed:
         test_name = get_last_element(sanitize_nodeid(report.nodeid))
-        log_file = os.path.join(LOG_DIR, f"{test_name}.log")
-        failed_log_file = os.path.join(FAILED_LOG_DIR, f"{test_name}.log")
-        if os.path.exists(log_file):
-            os.rename(log_file, failed_log_file)
-
-
-# @pytest.hookimpl(tryfirst=True, hookwrapper=True)
-# def pytest_runtest_makereport(item, call):
-#     """
-#     Capture screenshots on test failures and attach them to Allure reports.
-#     """
-#     outcome = yield
-#     report = outcome.get_result()
-
-#     # Capture screenshot on failure
-#     if report.when == "call" and report.failed:
-#         try:
-#             # Check if page fixture is in use
-#             page = item.funcargs.get("page", None)
-#             if page:
-#                 # Create screenshots directory if it doesn't exist
-#                 os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
-
-#                 # Generate a safe filename
-#                 test_name = get_last_element(sanitize_nodeid(item.nodeid))
-#                 timestamp = re.sub(r"[^0-9]", "", str(report.longrepr))[:8]
-#                 screenshot_name = f"{test_name}_{timestamp}.png"
-#                 screenshot_path = os.path.join(SCREENSHOTS_DIR, screenshot_name)
-
-#                 # Take screenshot
-#                 page.screenshot(path=screenshot_path)
-
-#                 # Attach screenshot to Allure report
-#                 with open(screenshot_path, "rb") as f:
-#                     allure.attach(
-#                         f.read(),
-#                         name=f"Screenshot on failure: {test_name}",
-#                         attachment_type=allure.attachment_type.PNG,
-#                     )
-
-#                 # Get page source to help with debugging
-#                 page_source = page.content()
-#                 allure.attach(
-#                     page_source,
-#                     name="Page Source",
-#                     attachment_type=allure.attachment_type.HTML,
-#                 )
-
-#         except Exception as e:
-#             logger.error("Failed to capture screenshot: %s", str(e))
+        log_file = LOG_DIR / f"{test_name}.log"
+        failed_log_file = FAILED_LOG_DIR / f"{test_name}.log"
+        if log_file.exists():
+            log_file.rename(failed_log_file)
