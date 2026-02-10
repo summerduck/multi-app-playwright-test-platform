@@ -1,4 +1,4 @@
-# ADR 0: Migrate from Custom Git Hooks to pre-commit Framework
+# ADR 3: Migrate from Custom Git Hooks to pre-commit Framework
 
 ## Status
 

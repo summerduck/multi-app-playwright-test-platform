@@ -10,14 +10,10 @@ import logging
 import os
 import re
 import shutil
-import sys
 from pathlib import Path
 
 import pytest
 from dotenv import load_dotenv
-
-# Handle display of output log when using xdist
-sys.stdout = sys.stderr
 
 # Base directory for test logs
 LOG_DIR = Path("test-logs")

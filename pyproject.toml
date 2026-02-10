@@ -138,7 +138,7 @@ addopts = [
     "--self-contained-html",
     "--alluredir=allure-report",
     "--capture=tee-sys",
-    "--reruns=2",
+    "--reruns=1",
 ]
 markers = [
     "smoke: Quick smoke tests",
