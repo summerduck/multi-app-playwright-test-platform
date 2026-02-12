@@ -1,4 +1,4 @@
-# ADR 4: Git Branching Strategy
+# ADR 3: Git Branching Strategy
 
 ## Status
 

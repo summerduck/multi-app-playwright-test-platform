@@ -1,7 +1,7 @@
 # 🎭 Multi-App Playwright Test Platform
 
 [![Code Quality](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
-[![Python](https://img.shields.io/badge/python-3.10+-blue?logo=python&logoColor=white)](https://www.python.org)
+[![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://www.python.org)
 [![Playwright](https://img.shields.io/badge/Playwright-1.51+-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![Ruff](https://img.shields.io/badge/linting-Ruff-261230?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -37,7 +37,7 @@ A test automation framework for E2E testing across multiple web applications, bu
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.12+
 - [Task](https://taskfile.dev/) (optional, for task runner commands)
 
 ### Setup
