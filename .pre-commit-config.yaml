@@ -1,0 +1,104 @@
+# Pre-commit hooks configuration
+# See https://pre-commit.com for more information
+
+default_language_version:
+  python: python3.12
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML syntax
+      - id: check-added-large-files
+        name: Check for large files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: check-toml
+        name: Check TOML syntax
+      - id: check-case-conflict
+        name: Check for case conflicts
+      - id: mixed-line-ending
+        name: Check line endings
+        args: ['--fix=lf']
+      - id: no-commit-to-branch
+        name: Prevent commits to protected branches
+        args: ["--branch=main"]
+
+  # Python linting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
+    hooks:
+      - id: ruff
+        name: Linting and static analysis with Ruff
+        args: ["--fix", "--exit-non-zero-on-fix"]
+      - id: ruff-format
+        name: Code formatting with Ruff
+
+  # Python type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.19.1
+    hooks:
+      - id: mypy
+        name: Type checking with mypy
+        args: ["--config-file=pyproject.toml", "--strict"]
+        additional_dependencies:
+          - pytest>=7.4.0
+          - playwright>=1.51.0
+          - types-requests
+        exclude: ^tests/
+
+  # Python security scanning
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.3
+    hooks:
+      - id: bandit
+        name: Security scanning with Bandit
+        args: ["-c", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]
+        exclude: ^tests/
+
+  # Dependency vulnerability audit
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.10.0
+    hooks:
+      - id: pip-audit
+        name: Dependency vulnerability audit with pip-audit
+        args: ["-r", "requirements.txt"]
+
+  # Complexity & maintainability metrics
+  - repo: local
+    hooks:
+      - id: radon-cc
+        name: Cyclomatic complexity check (Radon)
+        entry: radon cc --min C --average --show-complexity
+        language: system
+        types: [python]
+        exclude: ^tests/|^conftest\.py$
+        verbose: true
+      - id: radon-mi
+        name: Maintainability index check (Radon)
+        entry: radon mi --show --min B
+        language: system
+        types: [python]
+        exclude: ^tests/|^conftest\.py$
+        verbose: true
+
+  # Auto-sync dependencies after merge
+  - repo: local
+    hooks:
+      - id: post-merge-deps
+        name: Sync dependencies after merge
+        entry: bash -c 'git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | grep -qE "(requirements.*\.txt|pyproject\.toml)" && pip install -r requirements.txt && pip check || true'
+        language: system
+        always_run: true
+        stages: [post-merge]
+
+# Configuration
+fail_fast: false

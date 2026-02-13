@@ -1,0 +1,38 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: code-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      # Radon hooks use `language: system` in pre-commit config,
+      # so the binary must be available on PATH before pre-commit runs.
+      - name: Install system-level hook dependencies
+        run: pip install radon>=6.0.1
+
+      - name: Run all pre-commit checks
+        uses: pre-commit/action@v3.0.1
+        env:
+          # no-commit-to-branch is a local safety guard;
+          # branch protection is enforced by GitHub, not CI.
+          SKIP: no-commit-to-branch

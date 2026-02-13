@@ -1,0 +1,62 @@
+---
+description: Python best practices and patterns for modern software development
+globs: **/*.py, src/**/*.py, tests/**/*.py
+---
+
+# Python Best Practices
+
+## Code Style
+- Follow PEP 8 naming conventions:
+  - `snake_case` for functions and variables
+  - `PascalCase` for classes
+  - `UPPER_CASE` for constants
+- Maximum line length of 88 characters (Black default)
+- Use absolute imports over relative imports
+
+## Type Hints
+- Use type hints for function parameters and return types
+- Import types from `typing` module (e.g., `Optional`, `List`, `Dict`)
+- Use `Optional[Type]` for optional parameters
+- Example: `def process_data(name: str, count: Optional[int] = None) -> Dict[str, Any]:`
+
+## Testing with Pytest
+- Use pytest fixtures for setup and teardown
+- Follow AAA pattern: Arrange, Act, Assert
+- Parametrize tests for multiple scenarios: `@pytest.mark.parametrize`
+- Use pytest markers to categorize tests
+- Keep tests isolated and independent
+
+## Page Object Model (POM)
+- Create page classes that represent web pages
+- Encapsulate element locators within page classes
+- Methods should represent user actions (e.g., `click_login_button()`)
+- Return page objects for method chaining
+- Keep locators as class attributes or in separate locator files
+
+## Error Handling
+- Use specific exception types rather than bare `except:`
+- Handle expected exceptions explicitly
+- Log errors with context using Python's `logging` module
+- Raise custom exceptions for domain-specific errors
+- Use try-except blocks sparingly and only where needed
+
+## Code Organization
+- Follow the project's established patterns (Page Object, Workflow, Data Object)
+- Keep functions and methods focused on a single responsibility
+- Extract reusable logic into utility functions
+- Use meaningful variable and function names
+- Group related functionality into modules and packages
+
+## Documentation
+- Use docstrings for classes and public methods
+- Document complex logic with inline comments
+- Keep docstrings concise and focused on what/why, not how
+- Update documentation when changing functionality
+
+## Best Practices for Test Automation
+- Use explicit waits over implicit waits or sleep
+- Make tests data-driven where appropriate
+- Clean up test data after test execution
+- Use context managers for resource management
+- Avoid hardcoded values; use configuration or data files
+- Handle flaky tests by improving selectors or wait conditions, not by adding retries

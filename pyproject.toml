@@ -1,0 +1,167 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multi-app-playwright-test-platform"
+version = "1.0.0"
+description = "A unified test automation framework for E2E and performance testing across multiple web applications"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+extend-exclude = [
+    ".venv",
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "RET",  # flake8-return
+    "ARG",  # flake8-unused-arguments
+    "PTH",  # flake8-use-pathlib
+    "ERA",  # eradicate (commented-out code)
+    "PL",   # pylint
+]
+ignore = [
+    "E501",    # line too long (handled by ruff format)
+    "PLR0913", # too many arguments
+    "PLR2004", # magic value used in comparison
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ARG", "PLR2004"]  # Allow unused args and magic values in tests
+"conftest.py" = ["ARG"]  # Allow unused args in fixtures
+
+[tool.ruff.lint.isort]
+known-first-party = ["pages", "tests", "utils", "config"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_untyped_calls = true
+disallow_any_unimported = false
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+show_error_codes = true
+show_column_numbers = true
+pretty = true
+exclude = [
+    "^\\.venv/",
+    "^build/",
+    "^dist/",
+    "^__pycache__/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "playwright.*",
+    "pytest_playwright.*",
+    "allure.*",
+    "faker.*",
+    "dotenv.*",
+    "hypothesis.*",
+]
+ignore_missing_imports = true
+
+[tool.bandit]
+targets = ["pages", "tests", "utils", "config"]
+exclude_dirs = [".venv", "build", "dist", "__pycache__"]
+skips = ["B101"]  # Skip assert_used (common in tests)
+severity = "medium"
+confidence = "medium"
+
+[tool.bandit.assert_used]
+skips = ["*/test_*.py", "*/conftest.py"]
+
+[tool.coverage.run]
+source = ["pages", "utils", "config"]
+omit = [
+    "*/__pycache__/*",
+    "*/.venv/*",
+    "*/tests/*",
+    "*/.tox/*",
+]
+branch = true
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+fail_under = 80
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+log_cli = true
+log_level = "INFO"
+log_format = "%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
+console_output_style = "progress"
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+    "--cov=pages",
+    "--cov=utils",
+    "--cov=config",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--html=report.html",
+    "--self-contained-html",
+    "--alluredir=allure-report",
+    "--capture=tee-sys",
+    "--reruns=1",
+]
+markers = [
+    "smoke: Quick smoke tests",
+    "regression: Full regression tests",
+    "slow: Slow running tests",
+    "saucedemo: Tests for SauceDemo application",
+    "theinternet: Tests for The Internet application",
+    "uiplayground: Tests for UI Playground application",
+    "unit: Unit tests for framework code",
+    "property: Property-based tests (Hypothesis)",
+    "network: Network monitoring tests",
+    "validation: Validation tests",
+    "ui_ux: UI/UX tests",
+    "account_creation: Account creation tests",
+    "security: Security tests",
+    "performance: Performance tests",
+    "accessibility: Accessibility tests",
+    "acceptance: Acceptance tests",
+    "integration: Integration tests",
+]
+
+[tool.hypothesis]
+# Default profile: balanced speed and thoroughness
+# CI profile uses more examples for higher confidence
+# Dev profile uses fewer examples for faster feedback
+database_backend = "directory"
