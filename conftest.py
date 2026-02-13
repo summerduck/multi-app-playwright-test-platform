@@ -74,6 +74,10 @@ def pytest_configure(config: pytest.Config) -> None:
     It creates a directory for logs and ensures that the necessary directories
     exist before running the tests.
 
+    In parallel mode (pytest-xdist), only the master process cleans and
+    creates log directories. Worker processes just ensure directories exist
+    to avoid race conditions.
+
     Args:
         config: The Pytest configuration object
 
@@ -81,7 +85,15 @@ def pytest_configure(config: pytest.Config) -> None:
         None
     """
     load_dotenv()
-    make_dir_for_logs()
+
+    if not hasattr(config, "workerinput"):
+        # Master process or non-xdist run: safe to clean and recreate
+        make_dir_for_logs()
+    else:
+        # Worker process: just ensure directories exist (no rmtree)
+        LOG_DIR.mkdir(exist_ok=True)
+        FAILED_LOG_DIR.mkdir(parents=True, exist_ok=True)
+        SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @pytest.fixture
@@ -128,13 +140,41 @@ def get_last_element(node_id: str) -> str:
     return node_id.rsplit("/", maxsplit=1)[-1]
 
 
+def _build_log_filename(test_name: str) -> str:
+    """
+    Build a log filename with optional xdist worker ID prefix.
+
+    In parallel mode (pytest-xdist), each worker gets a unique ID
+    (gw0, gw1, ...) that is prepended to the filename to prevent
+    collisions between workers running tests with similar names.
+
+    Args:
+        test_name: The sanitized test name
+
+    Returns:
+        str: The log filename with optional worker prefix
+    """
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER", "")
+    prefix = f"{worker_id}_" if worker_id else ""
+    max_filename_length = 255  # NAME_MAX on macOS/Linux (filename only, not path)
+    max_name_length = max_filename_length - len(prefix) - len(".log")
+    truncated_test_name = test_name[:max_name_length]
+    return f"{prefix}{truncated_test_name}.log"
+
+
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item: pytest.Item) -> None:
     """
-    Configures a unique logger for each test before it runs
+    Configures a per-test file handler before the test runs.
 
-    This function configures a unique logger for each test before it runs.
-    It creates a log file for the test and removes any existing handlers.
+    Attaches a ``FileHandler`` to the **root** logger so that every
+    ``logging.getLogger(__name__)`` call in test code, page objects, and
+    utilities is captured. Unlike the previous implementation, existing
+    handlers from other plugins are **not** cleared -- only our handler
+    is added and later removed in teardown.
+
+    In parallel mode the log filename is prefixed with the xdist worker
+    ID to prevent file collisions between workers.
 
     Args:
         item: The Pytest item object
@@ -144,31 +184,44 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     """
     # Get test node ID for log naming
     test_name = get_last_element(sanitize_nodeid(item.nodeid))
-    max_filename_length = 255
-    truncated_test_name = test_name[
-        : max_filename_length - len(str(LOG_DIR)) - 5
-    ]  # 5 for ".log" and separators
-    log_file = LOG_DIR / f"{truncated_test_name}.log"
+    log_filename = _build_log_filename(test_name)
+    log_file = LOG_DIR / log_filename
 
-    # Configure logging for the current test
-    test_logger = logging.getLogger()
-    test_logger.handlers = []  # Remove any existing handlers
+    # Create a file handler for this test and attach it to the root logger
+    # so all loggers (test code, page objects, utilities) are captured.
     handler = logging.FileHandler(str(log_file))
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
     formatter.default_msec_format = "%s.%03d"
     handler.setFormatter(formatter)
-    test_logger.addHandler(handler)
+
+    root_logger = logging.getLogger()
+    root_logger.addHandler(handler)
+
+    # Store references on the item immediately after attaching the handler
+    # so that teardown can always locate and clean it up, even if the
+    # remaining setup code raises an exception.
+    item._log_handler = handler  # type: ignore[attr-defined]
+    item._log_file = log_file  # type: ignore[attr-defined]
+
+    if root_logger.level == logging.NOTSET or root_logger.level > logging.INFO:
+        root_logger.setLevel(logging.INFO)
+
+    # Use a named logger for framework lifecycle messages
+    test_logger = logging.getLogger(item.nodeid)
     test_logger.setLevel(logging.INFO)
     test_logger.info("Starting test - %s", item.nodeid)
+
+    item._test_logger = test_logger  # type: ignore[attr-defined]
 
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> None:
     """
-    Cleans up the logger after the test is completed
+    Cleans up the per-test file handler after the test is completed.
 
-    This function cleans up the logger after the test is completed.
-    It removes the test-specific handlers and closes the log file.
+    Writes a final lifecycle message, then closes and removes the
+    handler from the **root** logger. Other plugins' handlers remain
+    untouched.
 
     Args:
         item: The Pytest item object
@@ -177,23 +230,25 @@ def pytest_runtest_teardown(item: pytest.Item, nextitem: pytest.Item | None) -> 
     Returns:
         None
     """
-    root_logger = logging.getLogger()
-    root_logger.info("Finished test - %s", item.nodeid)
+    test_logger: logging.Logger | None = getattr(item, "_test_logger", None)
+    handler: logging.FileHandler | None = getattr(item, "_log_handler", None)
 
-    # Remove test-specific handlers
-    for handler in root_logger.handlers[:]:
-        if isinstance(handler, logging.FileHandler):
-            handler.close()
-            root_logger.removeHandler(handler)
+    if handler:
+        if test_logger:
+            test_logger.info("Finished test - %s", item.nodeid)
+        handler.close()
+        # Remove our handler from the root logger (not the named one)
+        logging.getLogger().removeHandler(handler)
 
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_logreport(report: pytest.TestReport) -> None:
     """
-    Handles special processing for logs of failed tests
+    Handles special processing for logs of failed tests.
 
-    This function handles special processing for logs of failed tests.
-    It renames the log file to a failed log file if the test fails.
+    Moves the log file of a failed test into the ``failed_tests/``
+    subdirectory. Uses the same worker-ID-prefixed filename that was
+    built during setup to locate the correct log file.
 
     Args:
         report: The Pytest report object
@@ -203,7 +258,8 @@ def pytest_runtest_logreport(report: pytest.TestReport) -> None:
     """
     if report.when == "call" and report.failed:
         test_name = get_last_element(sanitize_nodeid(report.nodeid))
-        log_file = LOG_DIR / f"{test_name}.log"
-        failed_log_file = FAILED_LOG_DIR / f"{test_name}.log"
+        log_filename = _build_log_filename(test_name)
+        log_file = LOG_DIR / log_filename
+        failed_log_file = FAILED_LOG_DIR / log_filename
         if log_file.exists():
             log_file.rename(failed_log_file)

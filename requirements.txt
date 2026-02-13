@@ -40,3 +40,4 @@ bandit[toml]==1.9.3
 pip-audit==2.10.0
 radon==6.0.1
 hypothesis==6.151.5
+mutmut==2.4.0
