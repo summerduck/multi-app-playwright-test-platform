@@ -208,3 +208,9 @@ __marimo__/
 
 # Notes for myself
 .notes/
+
+# Test logs
+test-logs/
+allure-report/
+report.html
+htmlcov/
