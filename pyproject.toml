@@ -165,3 +165,6 @@ markers = [
 # CI profile uses more examples for higher confidence
 # Dev profile uses fewer examples for faster feedback
 database_backend = "directory"
+
+[tool.mutmut]
+paths_to_mutate = ["conftest.py", "utils/", "config/", "pages/"]
