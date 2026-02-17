@@ -8,6 +8,8 @@ Accepted
 
 The project spans multiple test suites (SauceDemo, The Internet, UI Playground). Manual code reviews alone cannot enforce consistent formatting, type safety, and security standards across the codebase. Quality issues need to be caught before code reaches the CI/CD pipeline.
 
+Alternatives considered: manual code review only, Flake8 + Black + isort (separate tools), GitHub Super-Linter (all-in-one CI action), SonarQube (hosted quality platform).
+
 ## Decision
 
 Automated code quality is enforced via the following toolchain, integrated through [pre-commit](https://pre-commit.com/) hooks (16 hooks total, `fail_fast: false`):
@@ -32,6 +34,15 @@ Automated code quality is enforced via the following toolchain, integrated throu
 - `no-commit-to-branch` is skipped in CI (`SKIP` env var) — branch protection is enforced server-side
 
 All tool configuration is centralized in `pyproject.toml` (PEP 518). Task automation is provided via `Taskfile.yml` (`task format`, `task lint`, `task quality`, `task pre-commit`, etc.).
+
+Reasons:
+
+- Pre-commit hooks catch issues at commit time — before they reach CI — giving faster feedback
+- Ruff replaces Flake8 + isort + pyupgrade with a single tool that is 10-100x faster
+- Strict mypy enforces type safety across the entire codebase, reducing runtime errors
+- Bandit and pip-audit address security at two levels: source code patterns and dependency vulnerabilities
+- Centralizing configuration in `pyproject.toml` avoids tool-specific config file sprawl (`.flake8`, `.isort.cfg`, etc.)
+- `fail_fast: false` in pre-commit ensures all issues are reported in a single run, not one at a time
 
 ## Consequences
 
