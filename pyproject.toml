@@ -165,3 +165,16 @@ markers = [
 # CI profile uses more examples for higher confidence
 # Dev profile uses fewer examples for faster feedback
 database_backend = "directory"
+
+[tool.mutmut]
+paths_to_mutate = ["conftest.py", "utils/", "config/", "pages/"]
+pytest_add_cli_args = [
+    "-x",
+    "--no-header",
+    "-p", "no:cacheprovider",
+    "-p", "no:cov",
+    "-p", "no:html",
+    "-p", "no:allure_pytest",
+    "-p", "no:rerunfailures",
+    "--override-ini=addopts=",
+]
