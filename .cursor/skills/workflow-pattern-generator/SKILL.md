@@ -211,7 +211,7 @@ A test can use a workflow for setup and a page object for the action under test:
 ## Rules
 
 ### Do
-- Create page objects internally within workflow methods
+- Create page objects internally within the workflow class (`__init__` for shared pages, inside methods for page-specific ones) — never expose them as public attributes
 - Decorate every public method with `@allure.step()`
 - Return `Self` for chaining, a page object for handoff, or a concrete type for getters
 - Accept `config.data.models` dataclasses, not raw strings

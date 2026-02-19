@@ -272,6 +272,18 @@ class <Feature>Page(<App>BasePage):
         """Return whether the error banner is displayed."""
         logger.info("Checking error message visibility")
         return self._error_message.is_visible()
+
+    # ── Verification ─────────────────────────────────────────────────────
+    @allure.step("Verify page is loaded")
+    def verify_page_loaded(self) -> Self:
+        """Assert the page is in the expected state using Playwright expect().
+
+        Uses expect() for auto-waiting — never bare assert statements.
+        """
+        from playwright.sync_api import expect
+        logger.info("Verifying page is loaded")
+        expect(self._submit_button).to_be_visible()
+        return self
 ```
 
 ## Cross-Page Navigation
@@ -383,7 +395,7 @@ Avoid XPath and positional selectors (`nth-child`, index-based).
 - Accept `config.data.models` dataclasses, not raw strings
 - Log actions with `logger.info()`
 - Use Playwright auto-waiting (`.fill()`, `.click()`, `.wait_for()`)
-- Implement all UI verification as dedicated `verify_*` methods (e.g., `verify_popup`) inside page objects
+- Implement all UI verification as dedicated `verify_*` methods (e.g., `verify_page_loaded`) inside page objects — use `expect()` from `playwright.sync_api` inside them, never bare `assert` statements
 
 ### Do not
 - Create test data inside page objects
@@ -407,14 +419,20 @@ def get_submit_button(self) -> Locator:
     return self.submit_button
 ```
 
-**2. Include Test Assertions in Page Objects**
+**2. Use `assert` in Page Objects**
 ```python
-# Bad: Assertions belong in tests
+# Bad: bare assert in page objects — no auto-waiting, breaks on timing
 def login(self, email: str, password: str) -> None:
     self.email_input.fill(email)
     self.password_input.fill(password)
     self.submit_button.click()
     assert self.page.url == "/dashboard"  # Don't do this!
+
+# Good: verify_* methods use expect() — auto-waiting, belongs in the page layer
+from playwright.sync_api import expect
+def verify_redirected_to_dashboard(self) -> Self:
+    expect(self._page).to_have_url("/dashboard")
+    return self
 ```
 
 **3. Mix Concerns**

@@ -95,6 +95,7 @@ Tests receive page objects as **fixture parameters** (defined in `tests/<app>/co
 
 ```python
 from config.data.saucedemo import SauceDemoUser
+from pages.saucedemo.inventory_page import InventoryPage
 from pages.saucedemo.login_page import LoginPage
 
 @allure.epic("SauceDemo")
@@ -106,15 +107,15 @@ class TestLogin:
     @allure.title("Standard user can log in with valid credentials")
     @pytest.mark.saucedemo
     @pytest.mark.smoke
-    def test_valid_login(self, login_page: LoginPage) -> None:
+    def test_valid_login(self, login_page: LoginPage, inventory_page: InventoryPage) -> None:
         # Arrange
         login_page.navigate()
 
         # Act
-        inventory = login_page.login_as(SauceDemoUser.STANDARD)
+        login_page.login_as(SauceDemoUser.STANDARD)
 
         # Assert
-        inventory.verify_page_loaded()
+        inventory_page.verify_page_loaded()
 
     @allure.story("Login error handling")
     @allure.severity(allure.severity_level.CRITICAL)

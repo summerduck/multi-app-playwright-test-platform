@@ -32,7 +32,7 @@ This skill complements:
 
 ## Before Generating
 
-1. Identify the target app: `saucedemo`, `theinternet`, or `uiplayground`
+1. Identify the target app: `saucedemo`, `the_internet`, or `ui_playground`
 2. Check which Page Objects exist in `pages/<app>/`
 3. Review existing tests in `tests/<app>/` for patterns already in use
 4. Read `conftest.py` to confirm available fixtures and hooks
@@ -132,6 +132,8 @@ Each app directory has its own `conftest.py` that provides **page object fixture
 | `file_upload_page` | `FileUploadPage(page, base_url)` | `tests/the_internet/conftest.py` |
 | `dynamic_id_page` | `DynamicIdPage(page, base_url)` | `tests/ui_playground/conftest.py` |
 
+Note: page objects are always received as **fixtures**. Methods that transition the user to another page still return `Self` — the next page object comes from a separate fixture parameter, not from the return value of a POM method.
+
 ### How `base_url` Works
 
 Each app directory defines its own `base_url` fixture in `tests/<app>/conftest.py`:
@@ -217,11 +219,11 @@ Available predefined data:
 | `SauceDemoCheckout` | `VALID`, `EMPTY`, `MISSING_FIRST_NAME`, `MISSING_LAST_NAME`, `MISSING_POSTAL_CODE` | `CheckoutInfo` |
 | `SortOption` | `NAME_ASC`, `NAME_DESC`, `PRICE_ASC`, `PRICE_DESC` | `StrEnum` |
 
-Page object methods accept the dataclass, not raw strings:
+Page object methods accept the dataclass, not raw strings. All POM methods return `Self`:
 
 ```python
-# Page object signature
-def login_as(self, user: User) -> "InventoryPage": ...
+# Page object signatures
+def login_as(self, user: User) -> Self: ...
 def add_to_cart(self, product: Product) -> Self: ...
 def fill_info(self, info: CheckoutInfo) -> Self: ...
 def sort_by(self, option: SortOption) -> Self: ...
@@ -367,7 +369,7 @@ def test_<scenario>(<page_name>_page: <PageName>Page) -> None:
 - Use `allure.dynamic.title()` inside the test body for parametrized tests
 
 ### Do not
-- Use assert
+- Use `assert` to check DOM elements — use `expect()` for auto-waiting assertions on DOM
 - Instantiate page objects in tests — receive them as fixtures via app-level `conftest.py`
 - Put page object logic in tests — keep it in `pages/`
 - Use `time.sleep()` — rely on Playwright auto-waiting

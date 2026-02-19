@@ -69,8 +69,8 @@ performance/
 ├── scenarios/
 │   ├── __init__.py
 │   ├── saucedemo_scenarios.py # Login → inventory → cart → checkout flow
-│   ├── theinternet_scenarios.py
-│   └── uiplayground_scenarios.py
+│   ├── the_internet_scenarios.py
+│   └── ui_playground_scenarios.py
 ├── shapes/
 │   ├── __init__.py
 │   ├── ramp_up.py
@@ -82,7 +82,7 @@ performance/
 
 | Aspect | Convention |
 |--------|-----------|
-| File naming | `<app>_scenarios.py` for scenario files; `locustfile.py` as main entry point |
+| File naming | `<app>_scenarios.py` for scenario files using app directory names (`saucedemo`, `the_internet`, `ui_playground`); `locustfile.py` as main entry point |
 | Class naming | `<App>User(HttpUser)` — one class per target app |
 | Task naming | Method name describes the user action (e.g., `browse_inventory`, `view_product`) |
 | `name=` param | Required on every `self.client` call — used in thresholds and reports |
@@ -158,7 +158,7 @@ class SauceDemoUser(HttpUser):
 The Internet is a collection of independent pages — no login flow. Test individual page loads:
 
 ```python
-"""The Internet performance scenarios.
+"""The Internet performance scenarios — file: the_internet_scenarios.py
 
 Each page is independent — no session state required.
 """
@@ -340,7 +340,7 @@ Run specific app: locust -f performance/locustfile.py --class-picker
 """
 
 from performance.scenarios.saucedemo_scenarios import SauceDemoUser  # noqa: F401
-from performance.scenarios.theinternet_scenarios import TheInternetUser  # noqa: F401
+from performance.scenarios.the_internet_scenarios import TheInternetUser  # noqa: F401
 ```
 
 ## Taskfile Integration
