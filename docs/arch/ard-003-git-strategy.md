@@ -25,6 +25,14 @@ Branch protection on `main` enforces the workflow at the GitHub level:
 - Status checks must pass ("Code Quality Checks")
 - Branch must be up to date before merging
 
+Reasons:
+
+- GitHub Flow is the simplest strategy that provides PR-based review and CI gating
+- Squash merges keep `main` history readable — one commit per change, no merge noise
+- Conventional Commits branch prefixes (`feat/`, `fix/`, `chore/`) make branch purpose visible at a glance
+- Branch protection enforces the workflow server-side — it cannot be bypassed locally
+- Short-lived branches reduce merge conflicts and keep changes focused
+
 ## Consequences
 
 - Clean, linear `main` history where each commit maps to one completed change
