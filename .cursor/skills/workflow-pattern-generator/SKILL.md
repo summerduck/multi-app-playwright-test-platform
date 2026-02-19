@@ -195,9 +195,11 @@ A test can use a workflow for setup and a page object for the action under test:
     def test_cart_shows_added_items(
         self,
         saucedemo_workflow: SauceDemoWorkflow,
-        products=[SauceDemoProduct.BACKPACK, SauceDemoProduct.BIKE_LIGHT]
+        cart: CartPage,
     ) -> None:
         """Verify cart displays items added via workflow."""
+        products = [SauceDemoProduct.BACKPACK, SauceDemoProduct.BIKE_LIGHT]
+
         # Arrange — workflow handles login + add-to-cart
         saucedemo_workflow.add_items_to_cart(
             user=SauceDemoUser.STANDARD,
@@ -207,6 +209,12 @@ A test can use a workflow for setup and a page object for the action under test:
         # Assert — interact with cart page object directly
         cart.verify_cart_contents(expected_products=products)
 ```
+
+## Code Quality
+
+Apply all rules from the **code-quality-standards** skill.
+
+`workflow/` has no lint exemptions — full ruff + mypy strict + bandit apply. `ARG` is active: every parameter must be used.
 
 ## Rules
 

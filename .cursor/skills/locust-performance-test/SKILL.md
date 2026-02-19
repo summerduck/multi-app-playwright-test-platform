@@ -417,6 +417,12 @@ Add as a job in `.github/workflows/tests.yml` (see github-actions-test-pipeline 
           retention-days: 30
 ```
 
+## Code Quality
+
+Apply all rules from the **code-quality-standards** skill.
+
+`performance/` is **not** a first-party module — Locust scenario files have no first-party imports (no `pages/`, `config/` imports). `RET` is especially important in `tick()` methods: every branch must return `tuple[int, float] | None` explicitly.
+
 ## Rules
 
 ### Do

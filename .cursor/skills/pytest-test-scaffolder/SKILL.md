@@ -351,6 +351,16 @@ def test_<scenario>(<page_name>_page: <PageName>Page) -> None:
     <page_name>_page.verify_result()
 ```
 
+## Code Quality
+
+Apply all rules from the **code-quality-standards** skill.
+
+`tests/*` and `conftest.py` have two exemptions (see `pyproject.toml`):
+- `ARG` — unused fixture parameters are allowed (fixtures often have side effects)
+- `PLR2004` — magic values in assertions are allowed
+
+`assert` is permitted in `test_*.py` via `bandit skips = ["B101"]`; prefer `expect()` for DOM checks.
+
 ## Rules
 
 ### Do

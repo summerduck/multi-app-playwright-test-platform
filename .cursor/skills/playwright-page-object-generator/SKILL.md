@@ -183,10 +183,10 @@ import logging
 from typing import Self
 
 import allure
-from playwright.sync_api import Page, Locator
+from playwright.sync_api import Locator, Page
 
 from pages.base_page import BasePage
-from pages.<app>.locators as loc
+from pages.<app> import locators as loc
 
 logger = logging.getLogger(__name__)
 
@@ -221,10 +221,10 @@ import logging
 from typing import Self
 
 import allure
-from playwright.sync_api import Locator, Page
+from playwright.sync_api import Locator, Page, expect
 
 from pages.<app>.<app>_base_page import <App>BasePage
-from pages.<app>.locators as loc
+from pages.<app> import locators as loc
 
 logger = logging.getLogger(__name__)
 
@@ -280,7 +280,6 @@ class <Feature>Page(<App>BasePage):
 
         Uses expect() for auto-waiting — never bare assert statements.
         """
-        from playwright.sync_api import expect
         logger.info("Verifying page is loaded")
         expect(self._submit_button).to_be_visible()
         return self
@@ -384,6 +383,12 @@ Prefer stable selectors in this order:
 4. CSS selectors (last resort): `page.locator(".inventory_item_name")`
 
 Avoid XPath and positional selectors (`nth-child`, index-based).
+
+## Code Quality
+
+Apply all rules from the **code-quality-standards** skill.
+
+`pages/` has no lint exemptions — full ruff + mypy strict + bandit apply. Use `expect()` from `playwright.sync_api` in `verify_*` methods — never bare `assert`.
 
 ## Rules
 

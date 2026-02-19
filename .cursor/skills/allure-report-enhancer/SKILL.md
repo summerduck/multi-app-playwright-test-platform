@@ -352,6 +352,12 @@ When reviewing or enhancing tests, verify every test has:
 - [ ] No `with allure.step()` in tests — steps are handled by POM `@allure.step()` decorators
 - [ ] Page objects received as fixtures (from `tests/<app>/conftest.py`), not instantiated in tests
 
+## Code Quality
+
+Apply all rules from the **code-quality-standards** skill.
+
+First-party imports sort alphabetically: `config` comes before `pages`. `pytest_sessionfinish` must use `Path` from `pathlib` — not `os.path` (rule `PTH`).
+
 ## Rules
 
 ### Do
