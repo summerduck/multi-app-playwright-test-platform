@@ -314,7 +314,17 @@ Create `allure-report/categories.json` to classify failures in the report:
 ]
 ```
 
-Copy this file into the allure results directory before generating the report. The `task allure-report` Taskfile command generates reports from `allure-report/`.
+Commit this file to the repository as `allure-report/categories.json`. It is picked up automatically when `allure generate` runs. Add a Taskfile task to copy it before report generation if the directory is cleaned between runs:
+
+```yaml
+  allure-report:
+    desc: Generate Allure HTML report
+    cmds:
+      - cp allure-report/categories.json allure-results/categories.json || true
+      - allure generate allure-results --clean -o allure-report/html
+```
+
+The `task allure-report` Taskfile command generates reports from `allure-report/`.
 
 ## Decorator Order Convention
 

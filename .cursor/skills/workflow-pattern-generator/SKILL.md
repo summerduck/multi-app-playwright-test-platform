@@ -32,6 +32,8 @@ workflow/
 
 File naming: `<app>_workflow.py` — one workflow class per app.
 
+> **Coverage note:** `workflow/` is not in `pyproject.toml` coverage source (`source = ["pages", "utils", "config"]`). Workflow code is not measured by the coverage gate. If you add workflows, consider adding `workflow` to the coverage source, or accept that orchestration layer coverage is implicit through E2E tests.
+
 ## Architecture
 
 Workflows sit between the test layer and the page object layer, orchestrating
@@ -136,6 +138,27 @@ class <App>Workflow:
         # Orchestrate the multi-step flow
         return self
 ```
+
+## Conftest Fixture
+
+Workflows are provided to tests via fixtures in `tests/<app>/conftest.py`. Tests never instantiate workflows directly.
+
+```python
+"""Pytest fixtures for <App> tests — includes workflow fixture."""
+
+import pytest
+from playwright.sync_api import Page
+
+from workflow.<app>_workflow import <App>Workflow
+
+
+@pytest.fixture
+def <app>_workflow(page: Page, base_url: str) -> <App>Workflow:
+    """Provide a <App>Workflow instance for the current test."""
+    return <App>Workflow(page, base_url)
+```
+
+Add this fixture alongside the existing page object fixtures in the same `conftest.py`.
 
 ## Test Consumption
 

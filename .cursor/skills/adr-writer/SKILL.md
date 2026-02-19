@@ -102,9 +102,9 @@ Before writing, list `docs/arch/` to get the current set. The table below is a s
 | 001 | Playwright selection | Accepted | 4 alternatives, 6 reasons, benefits + costs |
 | 002 | Code quality infrastructure | Accepted | Full toolchain, quantified impact ("Ruff 10-100x faster") |
 | 003 | Git strategy | Accepted | Branching strategy specifics |
-| 004 | Cursor AI Skills | Proposed | AI-augmented development documentation |
+| 004 | Cursor AI Skills | Accepted | 9 skills, code-quality-standards as shared quality reference |
 
-Match the depth and specificity of ADR 001 and 002 — they set the bar.
+Match the depth and specificity of ADR 002 — it sets the bar (quantified impacts, full toolchain, concrete consequences). ADR 001 is deliberately sparse; treat it as a minimum floor, not a target.
 
 ## Planned ADRs (from roadmap)
 

@@ -64,7 +64,28 @@ pages/
     └── class_attribute_page.py
 ```
 
-File naming: `<feature>_page.py` for concrete pages, `<app>_base_page.py` for domain bases.
+File naming: `<feature>_page.py` for concrete pages, `<app>_base_page.py` for domain bases, `locators.py` for selector constants.
+
+## Locators Module (`pages/<app>/locators.py`)
+
+Locator strings live in a dedicated module — never inline in page object classes. This makes selector changes a single-file diff.
+
+```python
+"""Selector constants for <App> pages."""
+
+# ── Login ─────────────────────────────────────────────────────────────────
+LOGIN_USERNAME = "[data-test='username']"
+LOGIN_PASSWORD = "[data-test='password']"
+LOGIN_BUTTON = "[data-test='login-button']"
+LOGIN_ERROR = "[data-test='error']"
+
+# ── Inventory ─────────────────────────────────────────────────────────────
+INVENTORY_LIST = ".inventory_list"
+INVENTORY_ITEM_NAME = ".inventory_item_name"
+ADD_TO_CART_BACKPACK = "[data-test='add-to-cart-sauce-labs-backpack']"
+```
+
+Convention: module-level `UPPER_SNAKE_CASE` string constants, grouped by page with inline comments. No classes, no functions — just constants. Page objects import the module: `from pages.<app> import locators as loc` then use `page.locator(loc.LOGIN_BUTTON)`.
 
 ## Architecture
 

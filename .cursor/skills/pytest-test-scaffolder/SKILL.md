@@ -240,7 +240,7 @@ import logging
 
 import allure
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import expect  # import Page only if used directly in this test file
 
 from config.data.saucedemo import SauceDemoUser
 from pages.<app>.login_page import LoginPage

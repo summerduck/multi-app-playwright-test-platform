@@ -54,6 +54,7 @@ WORKDIR /app
 
 # Copy application code (order: least → most frequently changed)
 COPY pyproject.toml conftest.py ./
+COPY config/ config/
 COPY utils/ utils/
 COPY pages/ pages/
 COPY tests/ tests/
@@ -89,6 +90,7 @@ RUN groupadd --gid 1000 testuser \
     && useradd --uid 1000 --gid testuser --shell /bin/bash --create-home testuser
 
 COPY pyproject.toml conftest.py ./
+COPY config/ config/
 COPY utils/ utils/
 COPY pages/ pages/
 COPY tests/ tests/
@@ -121,6 +123,7 @@ services:
       - ./test-logs:/app/test-logs
       - ./allure-report:/app/allure-report
       - ./htmlcov:/app/htmlcov
+      - ./report.html:/app/report.html
     # pytest addopts in pyproject.toml handle --alluredir, --cov, --reruns, etc.
     command: ["tests/", "-n", "auto"]
 

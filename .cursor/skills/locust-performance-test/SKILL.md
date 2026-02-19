@@ -197,6 +197,56 @@ class TheInternetUser(HttpUser):
         self.client.get("/login", name="login-page")
 ```
 
+## UI Playground Scenario
+
+UI Playground is a collection of challenge pages for testing UI patterns — no session state:
+
+```python
+"""UI Playground performance scenarios — file: ui_playground_scenarios.py
+
+Static challenge pages — no session state required.
+"""
+
+import logging
+
+from locust import HttpUser, between, task
+
+logger = logging.getLogger(__name__)
+
+
+class UIPlaygroundUser(HttpUser):
+    """Simulates browsing UI testing challenge pages on UI Playground."""
+
+    host = "http://uitestingplayground.com"
+    wait_time = between(1, 3)
+
+    @task(3)
+    def load_homepage(self) -> None:
+        """Load the main page listing all challenges."""
+        self.client.get("/", name="homepage")
+
+    @task(2)
+    def load_dynamic_id(self) -> None:
+        """Load the Dynamic ID challenge page."""
+        self.client.get("/dynamicid", name="dynamic-id")
+
+    @task(2)
+    def load_class_attribute(self) -> None:
+        """Load the Class Attribute challenge page."""
+        self.client.get("/classattr", name="class-attribute")
+
+    @task(1)
+    def load_hidden_layers(self) -> None:
+        """Load the Hidden Layers challenge page."""
+        self.client.get("/hiddenlayers", name="hidden-layers")
+```
+
+Also add to `locustfile.py`:
+
+```python
+from performance.scenarios.ui_playground_scenarios import UIPlaygroundUser  # noqa: F401
+```
+
 ## Load Shapes
 
 ### Ramp-Up
@@ -406,6 +456,30 @@ Add as a job in `.github/workflows/tests.yml` (see github-actions-test-pipeline 
             --csv=performance/results \
             --html=performance/report.html
 
+      - name: Check performance thresholds
+        run: |
+          python - <<'EOF'
+          import csv, sys
+          from performance.thresholds import SAUCEDEMO_THRESHOLDS, check_thresholds
+
+          stats: dict[str, dict[str, float]] = {}
+          with open("performance/results_stats.csv") as f:
+              for row in csv.DictReader(f):
+                  name = row["Name"]
+                  stats[name] = {
+                      "p95_response_time_ms": float(row.get("95%", 0)),
+                      "error_rate_percent": float(row.get("Failure Count", 0))
+                      / max(float(row.get("Request Count", 1)), 1) * 100,
+                  }
+
+          violations = check_thresholds(stats)
+          if violations:
+              for v in violations:
+                  print(f"THRESHOLD VIOLATED: {v}")
+              sys.exit(1)
+          print("All thresholds passed.")
+          EOF
+
       - name: Upload performance results
         if: always()
         uses: actions/upload-artifact@v4
@@ -416,6 +490,8 @@ Add as a job in `.github/workflows/tests.yml` (see github-actions-test-pipeline 
             performance/report.html
           retention-days: 30
 ```
+
+The threshold check step runs after Locust and exits with code 1 on violations — this fails the CI job. Place it before `Upload performance results` so artifacts are still uploaded even when thresholds are exceeded (`if: always()` on the upload step).
 
 ## Code Quality
 
@@ -489,16 +565,25 @@ class SauceDemoUser(HttpUser):
 
 **3. Hard-Coded Credentials**
 ```python
-# Bad: Credentials scattered in scenario code
+# Bad: Real or private credentials in source code
 def on_start(self) -> None:
     self.client.post("/", data={"user-name": "admin", "password": "P@ssw0rd!"})
 
-# Good: Use well-known demo credentials or environment variables
+# Acceptable for public demo apps: well-known, published credentials are not sensitive
 def on_start(self) -> None:
     logger.info("Logging in as standard_user")
     self.client.post(
         "/",
         data={"user-name": "standard_user", "password": "secret_sauce"},
+        name="login",
+    )
+
+# Good for any real/private credentials: use environment variables
+import os
+def on_start(self) -> None:
+    self.client.post(
+        "/",
+        data={"user-name": os.environ["APP_USER"], "password": os.environ["APP_PASSWORD"]},
         name="login",
     )
 ```
