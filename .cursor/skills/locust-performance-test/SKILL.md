@@ -7,16 +7,40 @@ description: Generate Locust performance test scenarios for the multi-app test p
 
 Generate Locust HTTP performance scenarios for the project's target applications.
 
+## Why Use Locust Performance Tests?
+
+### Benefits
+
+✅ **Server-Side Baselines**: Measure response times under concurrent load — complements Playwright E2E
+✅ **Regression Detection**: Per-endpoint thresholds catch performance regressions in CI
+✅ **Realistic Load Profiles**: Task weights and think times simulate real user behaviour
+✅ **Custom Load Shapes**: Ramp-up and spike shapes model different traffic patterns
+✅ **Python-Native**: Scenarios are plain Python — no DSL, full IDE support and type hints
+✅ **CI-Ready**: Headless mode with CSV/HTML output for artifact collection
+
+### Problems It Solves
+
+❌ **No Performance Visibility**: Functional tests pass but the app is slow under load
+❌ **Silent Regressions**: Response times degrade gradually without threshold alerts
+❌ **Unrealistic Testing**: Constant-rate traffic doesn't model real user think time
+❌ **Blocked IPs**: Aggressive load against public apps without conservative limits
+❌ **Unmaintainable Scenarios**: Ad-hoc scripts with no structure or naming conventions
+
+This skill complements:
+- **playwright-page-object-generator** — Locust HTTP endpoints mirror POM `URL_PATH` values
+- **pytest-test-scaffolder** — `@pytest.mark.performance` marker for any pytest-based perf tests
+- **github-actions-test-pipeline** — CI job runs Locust after E2E tests
+
 ## Before Generating
 
 1. Add `locust` to `requirements.txt` if not already present — it is **not currently included**
-2. Check `conftest.py` `AppUrl` enum for target URLs
+2. Check `tests/<app>/conftest.py` for the `base_url` fixture of each target app
 3. Review the roadmap (`.notes/roadmap.md` → Performance Testing section) for planned scope
 4. Understand the constraint: these are **third-party public apps** with unknown rate limits
 
 ## Project Context
 
-- **Target apps** (from `conftest.py` `AppUrl` enum):
+- **Target apps** (base URLs defined in `tests/<app>/conftest.py`):
   - SauceDemo: `https://www.saucedemo.com` — e-commerce demo, has login + inventory + cart + checkout flow
   - The Internet: `https://the-internet.herokuapp.com` — collection of isolated page examples
   - UI Playground: `http://uitestingplayground.com` — UI testing challenge pages
@@ -53,6 +77,23 @@ performance/
 │   └── spike.py
 └── thresholds.py              # Per-endpoint regression thresholds
 ```
+
+## Conventions
+
+| Aspect | Convention |
+|--------|-----------|
+| File naming | `<app>_scenarios.py` for scenario files; `locustfile.py` as main entry point |
+| Class naming | `<App>User(HttpUser)` — one class per target app |
+| Task naming | Method name describes the user action (e.g., `browse_inventory`, `view_product`) |
+| `name=` param | Required on every `self.client` call — used in thresholds and reports |
+| `host` | Class attribute — matches `base_url` from `tests/<app>/conftest.py` |
+| `wait_time` | `between(1, 3)` — realistic think time between requests |
+| `@task(weight)` | Distribute traffic to match real user behaviour patterns |
+| `on_start()` | Authentication flow (SauceDemo); skip for apps that don't need login |
+| Logging | Module-level `logger = logging.getLogger(__name__)`; `%s` formatting |
+| Type hints | Full annotations on all functions; Python 3.12+ syntax, must pass `mypy --strict` |
+| Docstrings | Google-style; document what the task simulates and why the weight was chosen |
+| Thresholds | Per-endpoint `p95_response_time_ms` and `error_rate_percent` in `thresholds.py` |
 
 ## SauceDemo Scenario
 
@@ -378,15 +419,159 @@ Add as a job in `.github/workflows/tests.yml` (see github-actions-test-pipeline 
 
 ## Rules
 
-- Each app gets its own scenario file in `performance/scenarios/`
-- `name=` parameter on every `self.client` call — these names are used in thresholds and reports
-- `wait_time = between(1, 3)` — simulate realistic think time between requests
-- `@task(weight)` — distribute traffic to match real user behaviour patterns
-- `on_start()` for authentication (SauceDemo) — other apps may not need it
-- Conservative user counts for CI (max 20) — these are public third-party apps
-- Spike shapes for local investigation only — never in automated CI
+### Do
+- Give each app its own scenario file in `performance/scenarios/`
+- Add `name=` parameter on every `self.client` call — these names are used in thresholds and reports
+- Set `wait_time = between(1, 3)` — simulate realistic think time between requests
+- Use `@task(weight)` — distribute traffic to match real user behaviour patterns
+- Use `on_start()` for authentication (SauceDemo) — other apps may not need it
+- Keep user counts conservative for CI (max 20) — these are public third-party apps
 - Add `locust` to `requirements.txt` before generating (it is not currently included)
-- `logging.getLogger(__name__)` for scenario logging, `%s` formatting
+- Use `logging.getLogger(__name__)` for scenario logging, `%s` formatting
 - Type-hint all functions with Python 3.12+ syntax
-- Thresholds are starting points — update after collecting baseline data
-- Cross-reference: Locust HTTP endpoints should match `URL_PATH` values from page objects
+- Update thresholds after collecting baseline data — initial values are starting points
+- Cross-reference Locust HTTP endpoints with `URL_PATH` values from page objects
+- Document task weights in the class docstring
+
+### Do not
+- Run spike shapes in automated CI — these are for local investigation only
+- Exceed 20 concurrent users in CI — public third-party apps may rate-limit or block
+- Hard-code credentials in scenario files — use constants or environment variables
+- Skip the `name=` parameter on `self.client` calls — unnamed requests break threshold checks
+- Use `time.sleep()` inside tasks — Locust `wait_time` handles inter-task delays
+- Mix multiple apps in a single `HttpUser` class — one class per app
+- Import Playwright in Locust scenarios — Locust tests are HTTP-based only
+- Skip docstrings on task methods — reviewers need to know what each task simulates
+
+---
+
+### ❌ DON'T
+
+**1. Missing `name=` on Requests**
+```python
+# Bad: Unnamed requests appear as raw URLs in reports
+@task
+def browse_inventory(self) -> None:
+    self.client.get("/inventory.html")
+
+# Good: Named requests for clean reports and threshold matching
+@task(3)
+def browse_inventory(self) -> None:
+    self.client.get("/inventory.html", name="inventory")
+```
+
+**2. Aggressive Load in CI**
+```python
+# Bad: Too many users against a public third-party app
+class SauceDemoUser(HttpUser):
+    host = "https://www.saucedemo.com"
+
+    @task
+    def hammer_inventory(self) -> None:
+        for _ in range(100):
+            self.client.get("/inventory.html", name="inventory")
+
+# Good: Conservative load with think time
+class SauceDemoUser(HttpUser):
+    host = "https://www.saucedemo.com"
+    wait_time = between(1, 3)
+
+    @task(3)
+    def browse_inventory(self) -> None:
+        self.client.get("/inventory.html", name="inventory")
+```
+
+**3. Hard-Coded Credentials**
+```python
+# Bad: Credentials scattered in scenario code
+def on_start(self) -> None:
+    self.client.post("/", data={"user-name": "admin", "password": "P@ssw0rd!"})
+
+# Good: Use well-known demo credentials or environment variables
+def on_start(self) -> None:
+    logger.info("Logging in as standard_user")
+    self.client.post(
+        "/",
+        data={"user-name": "standard_user", "password": "secret_sauce"},
+        name="login",
+    )
+```
+
+**4. Mixing Apps in One Class**
+```python
+# Bad: Single class hits multiple apps
+class AllAppsUser(HttpUser):
+    @task
+    def saucedemo(self) -> None:
+        self.client.get("https://www.saucedemo.com/inventory.html")
+
+    @task
+    def theinternet(self) -> None:
+        self.client.get("https://the-internet.herokuapp.com/tables")
+
+# Good: Separate class per app with its own host
+class SauceDemoUser(HttpUser):
+    host = "https://www.saucedemo.com"
+    ...
+
+class TheInternetUser(HttpUser):
+    host = "https://the-internet.herokuapp.com"
+    ...
+```
+
+**5. No Wait Time**
+```python
+# Bad: No think time — unrealistic burst traffic
+class SauceDemoUser(HttpUser):
+    host = "https://www.saucedemo.com"
+
+    @task
+    def browse(self) -> None:
+        self.client.get("/inventory.html", name="inventory")
+
+# Good: Realistic think time between requests
+class SauceDemoUser(HttpUser):
+    host = "https://www.saucedemo.com"
+    wait_time = between(1, 3)
+
+    @task(3)
+    def browse(self) -> None:
+        self.client.get("/inventory.html", name="inventory")
+```
+
+## Common Anti-Patterns to Avoid
+
+### Anti-Pattern 1: Using Playwright in Locust
+
+```python
+# Bad: Importing Playwright in a Locust scenario
+from playwright.sync_api import sync_playwright
+
+class SauceDemoUser(HttpUser):
+    def on_start(self) -> None:
+        browser = sync_playwright().start().chromium.launch()
+```
+
+**Solution:** Locust tests are HTTP-based only. Use `self.client` for all requests. Playwright E2E tests handle UI behaviour.
+
+### Anti-Pattern 2: No Thresholds
+
+```python
+# Bad: Running Locust without success criteria
+# "It ran, so it passed" — no regression detection
+```
+
+**Solution:** Define per-endpoint thresholds in `thresholds.py` and check them after the run.
+
+### Anti-Pattern 3: Unweighted Tasks
+
+```python
+# Bad: All tasks have equal weight — unrealistic traffic distribution
+@task
+def browse(self) -> None: ...
+
+@task
+def checkout(self) -> None: ...
+```
+
+**Solution:** Use `@task(weight)` to model real user behaviour — browsing is more common than checkout.
