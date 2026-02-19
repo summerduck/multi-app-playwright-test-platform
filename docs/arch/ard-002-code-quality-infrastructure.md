@@ -12,14 +12,14 @@ Alternatives considered: manual code review only, Flake8 + Black + isort (separa
 
 ## Decision
 
-Automated code quality is enforced via the following toolchain, integrated through [pre-commit](https://pre-commit.com/) hooks (16 hooks total, `fail_fast: false`):
+Automated code quality is enforced via the following toolchain, integrated through [pre-commit](https://pre-commit.com/) hooks (17 hooks total, `fail_fast: false`):
 
 **Python analysis:**
 
 - **Ruff** — linting (13 rule categories including pycodestyle, pyflakes, isort, bugbear, pylint) and formatting, with auto-fix
 - **mypy (strict mode)** — static type checking with enforced type hints on all functions (excludes `tests/`)
 - **Bandit** — static security analysis for common vulnerabilities (excludes `tests/`)
-- **pip-audit** — dependency vulnerability scanning against `requirements.txt`
+- **pip-audit** — dependency vulnerability scanning against `requirements.txt` (runs on `push` stage only, not on every commit)
 - **Radon** — cyclomatic complexity (threshold C) and maintainability index (threshold B) checks
 
 **File hygiene** (via `pre-commit-hooks`):
@@ -27,6 +27,7 @@ Automated code quality is enforced via the following toolchain, integrated throu
 - Trailing whitespace, end-of-file fixer, YAML/TOML syntax validation
 - Large file guard (500 KB), merge conflict markers, case conflict detection, LF line endings
 - `no-commit-to-branch` on `main` (local safety guard; GitHub branch protection is the actual gate)
+- **Post-merge dependency sync** (`post-merge` stage) — automatically runs `pip install -r requirements.txt` and `pip check` when `requirements.txt` or `pyproject.toml` changes after a merge
 
 **CI enforcement:**
 

@@ -181,19 +181,20 @@ Exempt files (per `pyproject.toml`):
 
 ## Bandit (security)
 
-**B101 — assert_used:** `skips = ["B101"]` globally.
+The pre-commit bandit hook has `exclude: ^tests/` — bandit does **not** run on `tests/` at all.
 
-- `assert` is **allowed** in `test_*.py` and `conftest.py`
-- In `pages/`, `utils/`, `config/`, `workflow/`: use `expect()` from `playwright.sync_api` — never bare `assert`
+For all other code (`pages/`, `utils/`, `config/`, `workflow/`):
+- `B101` (assert_used) is skipped globally via `pyproject.toml` — so `assert` won't fail bandit
+- However, do not use bare `assert` in `pages/` or `workflow/`: asserts are disabled by Python's `-O` optimisation flag and provide no auto-waiting — use `expect()` instead
 
 ```python
 # Bad — in pages/
 def verify_loaded(self) -> Self:
-    assert self._page.url == "/inventory.html"
+    assert self._page.url == "/inventory.html"  # disabled with python -O, no auto-wait
 
 # Good — in pages/
 def verify_loaded(self) -> Self:
-    expect(self._page).to_have_url("/inventory.html")
+    expect(self._page).to_have_url("/inventory.html")  # auto-waits, clear error on failure
     return self
 ```
 
