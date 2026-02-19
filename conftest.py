@@ -5,13 +5,11 @@ Provides:
 - Playwright browser context configuration
 - Screenshot and trace capture on test failure with Allure attachment
 - Per-test file logging
-- App base URL resolution via markers
 """
 
 import logging
 import os
 from collections.abc import Generator
-from enum import StrEnum, unique
 from typing import Any
 
 import allure
@@ -32,16 +30,6 @@ from utils.log_helpers import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-# ── App base URLs ────────────────────────────────────────────────────────────
-@unique
-class AppUrl(StrEnum):
-    """Supported application base URLs, keyed by pytest marker name."""
-
-    SAUCEDEMO = "https://www.saucedemo.com"
-    THEINTERNET = "https://the-internet.herokuapp.com"
-    UIPLAYGROUND = "http://uitestingplayground.com"
 
 
 # ── CLI Options ──────────────────────────────────────────────────────────────
@@ -90,26 +78,6 @@ def user_password(request: pytest.FixtureRequest) -> str:
     """Retrieve user password from --user-pw CLI option or USER_PASSWORD env var."""
     password: str = request.config.getoption("--user-pw")
     return password
-
-
-@pytest.fixture
-def app_url(request: pytest.FixtureRequest) -> str:
-    """Resolve the base URL for the current test based on its app marker.
-
-    Falls back to --base-url if no app marker is present.
-    """
-    for app in AppUrl:
-        if request.node.get_closest_marker(app.name.lower()):
-            return app.value
-
-    base: str | None = request.config.getoption("--base-url", default=None)
-    if base:
-        return base
-
-    pytest.fail(
-        "No app marker (@pytest.mark.saucedemo, @pytest.mark.theinternet, "
-        "@pytest.mark.uiplayground) or --base-url provided."
-    )
 
 
 # ── Failure Artifact Capture ─────────────────────────────────────────────────
